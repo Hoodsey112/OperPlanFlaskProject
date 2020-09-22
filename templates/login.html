@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% import 'bootstrap/wtf.html' as wtf %}
+
+{% block title %}
+План операций
+{% endblock %}
+
+{% block content %}
+<center>
+{% with messages = get_flashed_messages() %}
+  {% if messages %}
+    <ul class=flashes>
+    {% for message in messages %}
+      <li>{{ message }}</li>
+    {% endfor %}
+    </ul>
+  {% endif %}
+{% endwith %}
+<div class="container">
+    <form method="post" action="">
+        {{ logForm.hidden_tag() }}
+        <tr>
+            <td><h1>План операций</h1></td>
+        </tr>
+        <tr>
+            <td>
+                <p>{{logForm.departName()}}</p>
+            </td>
+            <td>
+                <p>Выберите дату: {{logForm.operDate(class='datepicker')}}</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <p>{{ logForm.remember.label() }} {{ logForm.remember() }}</p>
+            </td>
+            <td>
+                <!-- <p>{{ logForm.submit }}</p> -->
+                <input class="btn btn-primary" type="submit" value="Войти">
+            </td>
+        </tr>
+    </form>
+</div>
+</center>
+{% endblock %}
