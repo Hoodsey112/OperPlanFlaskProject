@@ -2,6 +2,7 @@ from flask import Flask, render_template, redirect, url_for, request, flash
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
 from flask_bootstrap import Bootstrap
+import pandas as pd
 
 from Forms import LoginForm
 
@@ -135,25 +136,25 @@ def get_anesteziolog_list():
 def get_oper_list(operDate_query, selectDep):
     importData = []
     dataTable = db.engine.execute("""
-            SELECT DATE_FORMAT(dateOperation, '%d.%m.%Y') dateOperation,
-            externalId,
-            CONCAT(c.lastName, ' ', LEFT(c.firstName,1),'.', LEFT(c.patrName,1),'.') fio_client,
-            age age_client,
-            diagnoz,
-            operation,
+            SELECT DATE_FORMAT(dateOperation, '%d.%m.%Y') "Дата операции",
+            externalId "Номер ИБ",
+            CONCAT(c.lastName, ' ', LEFT(c.firstName,1),'.', LEFT(c.patrName,1),'.') "ФИО",
+            age "Возраст",
+            diagnoz "Диагноз",
+            operation "Операция",
             IF(CONCAT(hirurg1.lastName, ' ', LEFT(hirurg1.firstName,1),'.', LEFT(hirurg1.patrName,1),'.') is null, '', 
-            CONCAT(hirurg1.lastName, ' ', LEFT(hirurg1.firstName,1),'.', LEFT(hirurg1.patrName,1),'.')) fio_hirurg1,
+            CONCAT(hirurg1.lastName, ' ', LEFT(hirurg1.firstName,1),'.', LEFT(hirurg1.patrName,1),'.')) "Хирург 1",
             IF(CONCAT(hirurg2.lastName, ' ', LEFT(hirurg2.firstName,1),'.', LEFT(hirurg2.patrName,1),'.') is null, '', 
-            CONCAT(hirurg2.lastName, ' ', LEFT(hirurg2.firstName,1),'.', LEFT(hirurg2.patrName,1),'.')) fio_hirurg2,
+            CONCAT(hirurg2.lastName, ' ', LEFT(hirurg2.firstName,1),'.', LEFT(hirurg2.patrName,1),'.')) "Хирург 2",
             IF(CONCAT(hirurg3.lastName, ' ', LEFT(hirurg3.firstName,1),'.', LEFT(hirurg3.patrName,1),'.') is null, '', 
-            CONCAT(hirurg3.lastName, ' ', LEFT(hirurg3.firstName,1),'.', LEFT(hirurg3.patrName,1),'.')) fio_hirurg3,
+            CONCAT(hirurg3.lastName, ' ', LEFT(hirurg3.firstName,1),'.', LEFT(hirurg3.patrName,1),'.')) "Хирург 3",
             IF(CONCAT(anesteziolog.lastName, ' ', LEFT(anesteziolog.firstName,1),'.', LEFT(anesteziolog.patrName,1),'.') 
             IS NULL, '', CONCAT(anesteziolog.lastName, ' ', LEFT(anesteziolog.firstName,1),'.', 
-            LEFT(anesteziolog.patrName,1),'.')) fio_anesteziolog,
+            LEFT(anesteziolog.patrName,1),'.')) "Анестезиолог",
             IF(CONCAT(transfuziolog.lastName, ' ', LEFT(transfuziolog.firstName,1),'.', LEFT(transfuziolog.patrName,1),'.') 
             IS NULL, '', CONCAT(transfuziolog.lastName, ' ', LEFT(transfuziolog.firstName,1),'.', 
-            LEFT(transfuziolog.patrName,1),'.')) fio_transfuziolog,
-            numbOperBlock
+            LEFT(transfuziolog.patrName,1),'.')) "Трансфузиолог",
+            numbOperBlock "Операционная"
             FROM PlanOfOperation poo
             LEFT JOIN Client c ON poo.client_id = c.id
             LEFT JOIN Person hirurg1 ON poo.hirurg1 = hirurg1.id
@@ -166,18 +167,18 @@ def get_oper_list(operDate_query, selectDep):
             and orgStruct_id = %s
             order by idx asc""", (operDate_query, int(selectDep),))
     for dataRow in dataTable:
-        importData.append({'dateOperation': dataRow['dateOperation'],
-                           'externalId': dataRow['externalId'],
-                           'fio_client': dataRow['fio_client'],
-                           'age_client': dataRow['age_client'],
-                           'diagnoz': dataRow['diagnoz'],
-                           'operation': dataRow['operation'],
-                           'fio_hirurg1': dataRow['fio_hirurg1'],
-                           'fio_hirurg2': dataRow['fio_hirurg2'],
-                           'fio_hirurg3': dataRow['fio_hirurg3'],
-                           'fio_anesteziolog': dataRow['fio_anesteziolog'],
-                           'fio_transfuziolog': dataRow['fio_transfuziolog'],
-                           'numbOperBlock': dataRow['numbOperBlock']})
+        importData.append({'Дата операции': dataRow['Дата операции'],
+                           'Номер ИБ': dataRow['Номер ИБ'],
+                           'ФИО': dataRow['ФИО'],
+                           'Возраст': dataRow['Возраст'],
+                           'Диагноз': dataRow['Диагноз'],
+                           'Операция': dataRow['Операция'],
+                           'Хирург 1': dataRow['Хирург 1'],
+                           'Хирург 2': dataRow['Хирург 2'],
+                           'Хирург 3': dataRow['Хирург 3'],
+                           'Анестезиолог': dataRow['Анестезиолог'],
+                           'Трансфузиолог': dataRow['Трансфузиолог'],
+                           'Операционная': dataRow['Операционная']})
     dataTable.close()
     return importData
 
@@ -197,3 +198,13 @@ def login_page():
                                externals=externalsID, hirurgs=hirurgList, anesteziologList=anesteziologList,
                                dataSet=importData)
     return render_template('login.html', logForm=form)
+
+
+@app.route('/exportExcel')
+def exportExcel():
+    exportData = get_oper_list('2020-09-22', 62)
+    df = pd.DataFrame(exportData)
+    writer = pd.ExcelWriter('План операций.xlsx')
+    df.to_excel(writer)
+    writer.save()
+    return 'nothing'

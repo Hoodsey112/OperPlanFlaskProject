@@ -5,15 +5,13 @@
 {% endblock %}
 
 {% block content %}
-<div class="">
-    <h3>Дата операции: {{operDate}}</h3>
-</div>
 <form action="/add_client" method="post" name="ClientInfo">
     <center>
         <div class="jumbotron text-center">
+            <h3>Дата операции: {{operDate}}</h3>
             <div class="container">
                 <div class="row">
-                    <div class="col-xs-4">
+                    <div class="col-xs-6">
                         <div class="well well-sm">
                             <h4>Информация по пациенту</h4>
                             <p style="font-size:11pt">Номер ИБ:</p>
@@ -26,88 +24,112 @@
                                 {% endfor %}
                             </select>
                             </p>
-                            <p style="font-size:11pt">Фамилия И.О.: <input type="text" name="fio_client" value="" readonly></p><br>
-                            <p style="font-size:11pt">Возраст: <input type="text" name="age_client" value="" readonly></p><br>
+                            <p style="font-size:11pt">Фамилия И.О.:</p>
+                            <p style="font-size:11pt"><input type="text" name="fio_client" value="" readonly></p>
+                            <p style="font-size:11pt">Возраст:</p>
+                            <p style="font-size:11pt"><input type="text" name="age_client" value="" readonly></p>
                         </div>
                     </div>
-                    <div class="col-xs-4">
+                    <div class="col-xs-6">
                         <div class="well well-sm">
                             <h4>Информация об операции</h4>
-                            <p style="font-size:11pt">Диагноз: <textarea name="diagnoz_client"> </textarea></p><br>
-                            <p style="font-size:11pt">Операция: <textarea name="operation_client"> </textarea></p><br>
+                            <p style="font-size:11pt">Диагноз:</p>
+                            <p style="font-size:11pt"><textarea name="diagnoz_client" rows="3" cols="45"></textarea></p>
+                            <p style="font-size:11pt">Операция:</p>
+                            <p style="font-size:11pt"><textarea name="operation_client" rows="3" cols="45"></textarea></p>
                         </div>
                     </div>
-                    <div class="col-xs-4">
+                </div>
+                <div class="row">
+                    <div class="col-xs-12">
                         <div class="well well-sm">
-                            <p style="font-size:11pt">Хирург 1:</p>
-                            <p style="font-size:11pt">
-                                <select name="hirurg_1" size="1">
-                                    <option disabled value="" selected="selected">Выберите хирурга</option>
-                                    {% for hirurg in hirurgs %}
-                                        <option value="{{hirurg.id}}">{{hirurg.fio}}</option>
-                                    {% endfor %}
-                                </select>
-                            </p>
-                            <p style="font-size:11pt">Хирург 2:</p>
-                            <p style="font-size:11pt">
-                                <select name="hirurg_2" size="1">
-                                    <option disabled value="" selected="selected">Выберите хирурга</option>
-                                    {% for hirurg in hirurgs %}
-                                        <option value="{{hirurg.id}}">{{hirurg.fio}}</option>
-                                    {% endfor %}
-                                </select>
-                            </p>
-                            <p style="font-size:11pt">Хирург 3:</p>
-                            <p style="font-size:11pt">
-                                <select name="hirurg_3" size="1">
-                                    <option disabled value="" selected="selected">Выберите хирурга</option>
-                                        {% for hirurg in hirurgs %}
-                                            <option value="{{hirurg.id}}">{{hirurg.fio}}</option>
-                                        {% endfor %}
-                                </select>
-                            </p>
-                            <p style="font-size:11pt">Анестезиолог:</p>
-                            <p style="font-size:11pt">
-                                <select name="anesteziolog" size="1">
-                                    <option disabled value="" selected="selected">Выберите анестезиолога</option>
-                                    {% for anesteziolog in anesteziologList %}
-                                        <option value="{{anesteziolog.id}}">{{anesteziolog.fio}}</option>
-                                    {% endfor %}
-                                </select>
-                            </p>
-                            <p style="font-size:11pt">Трансфузиолог:</p>
-                            <p style="font-size:11pt">
-                                <select name="transfuziolog" size="1">
-                                    <option disabled value="" selected="selected">Выберите трансфузиолога</option>
-                                    {% for hirurg in hirurgs %}
-                                        <option value="{{hirurg.id}}">{{hirurg.fio}}</option>
-                                    {% endfor %}
-                                </select>
-                            </p>
-                            <p style="font-size:11pt">Операционная:</p>
-                            <p style="font-size:11pt">
-                                <select name="operRoom" size="1">
-                                    <option disabled value="" selected="selected">Выберите операционную</option>
-                                    <option value="№ 1">№ 1</option>
-                                    <option value="№ 2">№ 2</option>
-                                    <option value="№ 3">№ 3</option>
-                                    <option value="№ 4">№ 4</option>
-                                    <option value="№ 5">№ 5</option>
-                                    <option value="№ 6">№ 6</option>
-                                    <option value="№ 7">№ 7</option>
-                                    <option value="ЧЛХ">ЧЛХ</option>
-                                    <option value="ЛОР">ЛОР</option>
-                                    <!--<option value="Онкология">Онкология</option>-->
-                                </select>
-                            </p>
+                            <h4>Информация по операционной</h4>
+                            <div class="row">
+                                <div class="col-xs-4">
+                                    <p style="font-size:11pt">Хирург 1:</p>
+                                    <p style="font-size:11pt">
+                                        <select name="hirurg_1" size="1">
+                                            <option disabled value="" selected="selected">Выберите хирурга</option>
+                                            {% for hirurg in hirurgs %}
+                                                <option value="{{hirurg.id}}">{{hirurg.fio}}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </p>
+                                </div>
+                                <div class="col-xs-4">
+                                    <p style="font-size:11pt">Хирург 2:</p>
+                                    <p style="font-size:11pt">
+                                        <select name="hirurg_2" size="1">
+                                            <option disabled value="" selected="selected">Выберите хирурга</option>
+                                            {% for hirurg in hirurgs %}
+                                                <option value="{{hirurg.id}}">{{hirurg.fio}}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </p>
+                                </div>
+                                <div class="col-xs-4">
+                                    <p style="font-size:11pt">Хирург 3:</p>
+                                    <p style="font-size:11pt">
+                                        <select name="hirurg_3" size="1">
+                                            <option disabled value="" selected="selected">Выберите хирурга</option>
+                                                {% for hirurg in hirurgs %}
+                                                    <option value="{{hirurg.id}}">{{hirurg.fio}}</option>
+                                                {% endfor %}
+                                        </select>
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-xs-4">
+                                    <p style="font-size:11pt">Анестезиолог:</p>
+                                    <p style="font-size:11pt">
+                                        <select name="anesteziolog" size="1">
+                                            <option disabled value="" selected="selected">Выберите анестезиолога</option>
+                                            {% for anesteziolog in anesteziologList %}
+                                                <option value="{{anesteziolog.id}}">{{anesteziolog.fio}}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </p>
+                                </div>
+                                <div class="col-xs-4">
+                                    <p style="font-size:11pt">Трансфузиолог:</p>
+                                    <p style="font-size:11pt">
+                                        <select name="transfuziolog" size="1">
+                                            <option disabled value="" selected="selected">Выберите трансфузиолога</option>
+                                            {% for hirurg in hirurgs %}
+                                                <option value="{{hirurg.id}}">{{hirurg.fio}}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </p>
+                                </div>
+                                <div class="col-xs-4">
+                                    <p style="font-size:11pt">Операционная:</p>
+                                    <p style="font-size:11pt">
+                                        <select name="operRoom" size="1">
+                                            <option disabled value="" selected="selected">Выберите операционную</option>
+                                            <option value="№ 1">№ 1</option>
+                                            <option value="№ 2">№ 2</option>
+                                            <option value="№ 3">№ 3</option>
+                                            <option value="№ 4">№ 4</option>
+                                            <option value="№ 5">№ 5</option>
+                                            <option value="№ 6">№ 6</option>
+                                            <option value="№ 7">№ 7</option>
+                                            <option value="ЧЛХ">ЧЛХ</option>
+                                            <option value="ЛОР">ЛОР</option>
+                                            <option value="Онкология">Онкология</option>
+                                        </select>
+                                    </p>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
+            <input class="btn btn-success" type="submit" value="Добавить">
+            <a href="/exportExcel">
+                <input id="exportExcel" class="btn btn-primary" type="button" value="Экспорт в Excel">
+            </a>
         </div>
-        <br><br><input class="btn btn-success" type="submit" value="Добавить"><br><br>
-        <p></p>
-        <p></p>
         <table border="1" class="table table-striped">
             <tr>
                 <th>Дата операции</th>
@@ -158,5 +180,17 @@
 $(document).ready(function(){
   $('[data-toggle="tooltip"]').tooltip();
 });
+</script>
+<script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+<script type=text/javascript>
+        $(function() {
+          $('input#exportExcel').bind('click', function() {
+            $.getJSON('/exportExcel',
+                function(data) {
+              //do nothing
+            });
+            return false;
+          });
+        });
 </script>
 {% endblock %}

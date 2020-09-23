@@ -6,7 +6,7 @@
 {% endblock %}
 
 {% block content %}
-<center>
+
 {% with messages = get_flashed_messages() %}
   {% if messages %}
     <ul class=flashes>
@@ -16,30 +16,20 @@
     </ul>
   {% endif %}
 {% endwith %}
-<div class="container">
-    <form method="post" action="">
+<form method="post" action="">
+    <div class="container">
         {{ logForm.hidden_tag() }}
-        <tr>
-            <td><h1>План операций</h1></td>
-        </tr>
-        <tr>
-            <td>
-                <p>{{logForm.departName()}}</p>
-            </td>
-            <td>
-                <p>Выберите дату: {{logForm.operDate(class='datepicker')}}</p>
-            </td>
-        </tr>
-        <tr>
-            <td>
-                <p>{{ logForm.remember.label() }} {{ logForm.remember() }}</p>
-            </td>
-            <td>
-                <!-- <p>{{ logForm.submit }}</p> -->
-                <input class="btn btn-primary" type="submit" value="Войти">
-            </td>
-        </tr>
-    </form>
-</div>
-</center>
+        <div class="panel panel-success">
+            <div class="panel-body">
+                <center>
+                    <h1>План операций</h1>
+                    <p>{{logForm.departName()}}</p>
+                    <p>Выберите дату: {{logForm.operDate(class='datepicker')}}</p>
+                    <p>{{ logForm.remember.label() }} {{ logForm.remember() }}</p>
+                    <input class="btn btn-primary" type="submit" value="Войти">
+                </center>
+            </div>
+        </div>
+    </div>
+</form>
 {% endblock %}
