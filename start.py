@@ -1,8 +1,11 @@
-from flask import Flask, render_template, redirect, url_for, request, flash
+from flask import Flask, render_template, redirect, url_for, request, flash, send_file, send_from_directory
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
 from flask_bootstrap import Bootstrap
+from styleframe import StyleFrame
+from io import BytesIO
 import pandas as pd
+import numpy as np
 
 from Forms import LoginForm
 
@@ -136,7 +139,7 @@ def get_anesteziolog_list():
 def get_oper_list(operDate_query, selectDep):
     importData = []
     dataTable = db.engine.execute("""
-            SELECT DATE_FORMAT(dateOperation, '%d.%m.%Y') "Дата операции",
+            SELECT idx,
             externalId "Номер ИБ",
             CONCAT(c.lastName, ' ', LEFT(c.firstName,1),'.', LEFT(c.patrName,1),'.') "ФИО",
             age "Возраст",
@@ -167,8 +170,7 @@ def get_oper_list(operDate_query, selectDep):
             and orgStruct_id = %s
             order by idx asc""", (operDate_query, int(selectDep),))
     for dataRow in dataTable:
-        importData.append({'Дата операции': dataRow['Дата операции'],
-                           'Номер ИБ': dataRow['Номер ИБ'],
+        importData.append({'Номер ИБ': dataRow['Номер ИБ'],
                            'ФИО': dataRow['ФИО'],
                            'Возраст': dataRow['Возраст'],
                            'Диагноз': dataRow['Диагноз'],
@@ -183,6 +185,54 @@ def get_oper_list(operDate_query, selectDep):
     return importData
 
 
+def get_oper_list_export(operDate_query, selectDep):
+    importData = []
+    dataTable = db.engine.execute("""
+            SELECT idx "№ п/п",
+            CONCAT(c.lastName, ' ', LEFT(c.firstName,1),'.', LEFT(c.patrName,1),'.') "ФИО",
+            age "Возраст",
+            externalId "Номер ИБ",
+            diagnoz "Диагноз",
+            operation "Операция",
+            CONCAT(IF (CONCAT(hirurg1.lastName, ' ', hirurg1.firstName, ' ', hirurg1.patrName) IS NULL, ' ', 
+            CONCAT(hirurg1.lastName, ' ', hirurg1.firstName, ' ', hirurg1.patrName)),'\n ', 
+            IF (CONCAT(hirurg2.lastName, ' ', hirurg2.firstName, ' ', hirurg2.patrName) IS null, ' ', 
+            CONCAT(hirurg2.lastName, ' ', hirurg2.firstName, ' ', hirurg2.patrName)), '\n ', 
+            IF (CONCAT(hirurg3.lastName, ' ', hirurg3.firstName, ' ', hirurg3.patrName) IS null, ' ', 
+            CONCAT(hirurg3.lastName, ' ', hirurg3.firstName, ' ', hirurg3.patrName))) "Хирурги",
+            IF(CONCAT(anesteziolog.lastName, ' ', LEFT(anesteziolog.firstName,1),'.', LEFT(anesteziolog.patrName,1),'.') 
+            IS NULL, '', CONCAT(anesteziolog.lastName, ' ', LEFT(anesteziolog.firstName,1),'.', 
+            LEFT(anesteziolog.patrName,1),'.')) "Анестезиолог",
+            IF(CONCAT(transfuziolog.lastName, ' ', LEFT(transfuziolog.firstName,1),'.', LEFT(transfuziolog.patrName,1),'.') 
+            IS NULL, '', CONCAT(transfuziolog.lastName, ' ', LEFT(transfuziolog.firstName,1),'.', 
+            LEFT(transfuziolog.patrName,1),'.')) "Трансфузиолог",
+            numbOperBlock "Опер. каб."
+            FROM PlanOfOperation poo
+            LEFT JOIN Client c ON poo.client_id = c.id
+            LEFT JOIN Person hirurg1 ON poo.hirurg1 = hirurg1.id
+            LEFT JOIN Person hirurg2 ON poo.hirurg2 = hirurg2.id
+            LEFT JOIN Person hirurg3 ON poo.hirurg3 = hirurg3.id
+            LEFT JOIN Person anesteziolog ON poo.anestziolog = anesteziolog.id
+            LEFT JOIN Person transfuziolog ON poo.transfuziolog = transfuziolog.id
+            where poo.deleted = 0
+            and dateOperation = %s
+            and orgStruct_id = %s
+            order by idx asc""", (operDate_query, int(selectDep),))
+    for dataRow in dataTable:
+        importData.append({'№ п/п': dataRow['№ п/п'],
+                           'ФИО': dataRow['ФИО'],
+                           'Возраст': dataRow['Возраст'],
+                           'Номер ИБ': dataRow['Номер ИБ'],
+                           'Диагноз': dataRow['Диагноз'],
+                           'Операция': dataRow['Операция'],
+                           'Хирурги': dataRow['Хирурги'],
+                           'Анестезиолог': dataRow['Анестезиолог'],
+                           'Трансфузиолог': dataRow['Трансфузиолог'],
+                           'Опер. каб.': dataRow['Опер. каб.']})
+    dataTable.close()
+    return importData
+
+
 @app.route('/', methods=['GET', 'POST'])
 def login_page():
     form = LoginForm()
@@ -192,19 +242,94 @@ def login_page():
         hirurgList = get_hirurg_list(form.departName.data)
         anesteziologList = get_anesteziolog_list()
         importData = get_oper_list(form.operDate.data, form.departName.data)
-        depNameTitle = dict(form.departName.choices).get(form.departName.data)
+        dictDep = {index: value for index, value in form.departName.choices}
+        depNameTitle = dictDep.get(int(form.departName.data))
         return render_template('add_client.html', departName=depNameTitle,
                                operDate=form.operDate.data.strftime('%d.%m.%Y'),
                                externals=externalsID, hirurgs=hirurgList, anesteziologList=anesteziologList,
-                               dataSet=importData)
+                               dataSet=importData, depID=form.departName.data, opDate=form.operDate.data)
     return render_template('login.html', logForm=form)
 
 
 @app.route('/exportExcel')
 def exportExcel():
-    exportData = get_oper_list('2020-09-22', 62)
+    exportData = get_oper_list_export('2020-09-23', 62)
     df = pd.DataFrame(exportData)
-    writer = pd.ExcelWriter('План операций.xlsx')
-    df.to_excel(writer)
+    writer = pd.ExcelWriter('План операций.xlsx', engine="xlsxwriter")
+    df.to_excel(writer, index=False, startrow=4, startcol=0)
+    opDate = '23.09.2020'
+    depName = 'Хирургическое отделение №3'
+    workbook = writer.book
+    worksheet = writer.sheets['Sheet1']
+    title_format = workbook.add_format({'bold': True,
+                                        'align': 'center',
+                                        'font': 'Times New Roman',
+                                        'size': 14})
+    table_format_header = workbook.add_format({'bold': True,
+                                               'border': 1,
+                                               'font': 'Times New Roman',
+                                               'size': 10,
+                                               'text_wrap': True,
+                                               'align': 'center',
+                                               'valign': 'vcenter'})
+    table_format = workbook.add_format({'bold': False,
+                                        'border': 1,
+                                        'font': 'Times New Roman',
+                                        'size': 10,
+                                        'text_wrap': True,
+                                        'align': 'center',
+                                        'valign': 'vcenter'})
+    worksheet.merge_range('C1:H1', 'План операций на ' + opDate, title_format)
+    worksheet.merge_range('C2:H2', depName, title_format)
+
+    for col, value in enumerate(df.columns.values):
+        worksheet.write(4, col, value, table_format_header)
+
+    for row, item in enumerate(df.values):
+        for col, val in enumerate(item):
+            worksheet.write(row + 5, col, val, table_format)
+
     writer.save()
     return 'nothing'
+
+
+@app.route('/exportExcelTest', methods=['GET'])
+def exportExcelTest():
+    operDate = request.args['operDate']
+    departID = request.args['departID']
+    exportData = get_oper_list_export(operDate, departID)
+    df = pd.DataFrame(exportData)
+    writer = pd.ExcelWriter('План операций.xlsx', engine="xlsxwriter")
+    df.to_excel(writer, index=False, startrow=4, startcol=0)
+    workbook = writer.book
+    worksheet = writer.sheets['Sheet1']
+    title_format = workbook.add_format({'bold': True,
+                                        'align': 'center',
+                                        'font': 'Times New Roman',
+                                        'size': 14})
+    table_format_header = workbook.add_format({'bold': True,
+                                               'border': 1,
+                                               'font': 'Times New Roman',
+                                               'size': 10,
+                                               'text_wrap': True,
+                                               'align': 'center',
+                                               'valign': 'vcenter'})
+    table_format = workbook.add_format({'bold': False,
+                                        'border': 1,
+                                        'font': 'Times New Roman',
+                                        'size': 10,
+                                        'text_wrap': True,
+                                        'align': 'center',
+                                        'valign': 'vcenter'})
+    worksheet.merge_range('C1:H1', 'План операций на ' + operDate.data.strftime('%d.%m.%Y'), title_format)
+    worksheet.merge_range('C2:H2', request.args['departName'], title_format)
+
+    for col, value in enumerate(df.columns.values):
+        worksheet.write(4, col, value, table_format_header)
+
+    for row, item in enumerate(df.values):
+        for col, val in enumerate(item):
+            worksheet.write(row + 5, col, val, table_format)
+
+    writer.close()
+    return send_file("План операций.xlsx", as_attachment=True)

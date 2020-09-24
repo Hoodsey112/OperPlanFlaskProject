@@ -126,13 +126,13 @@
                 </div>
             </div>
             <input class="btn btn-success" type="submit" value="Добавить">
-            <a href="/exportExcel">
-                <input id="exportExcel" class="btn btn-primary" type="button" value="Экспорт в Excel">
+            <a href="{{url_for('exportExcelTest', departID=depID, operDate=opDate)}}">
+                <input id="exportExcelTest" class="btn btn-primary" type="button" value="Экспорт в Excel">
             </a>
         </div>
         <table border="1" class="table table-striped">
             <tr>
-                <th>Дата операции</th>
+                <!--<th>Дата операции</th>-->
                 <th>Номер ИБ</th>
                 <th>ФИО</th>
                 <th>Возраст</th>
@@ -180,17 +180,5 @@
 $(document).ready(function(){
   $('[data-toggle="tooltip"]').tooltip();
 });
-</script>
-<script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
-<script type=text/javascript>
-        $(function() {
-          $('input#exportExcel').bind('click', function() {
-            $.getJSON('/exportExcel',
-                function(data) {
-              //do nothing
-            });
-            return false;
-          });
-        });
 </script>
 {% endblock %}
