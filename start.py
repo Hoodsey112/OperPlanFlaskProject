@@ -2,10 +2,7 @@ from flask import Flask, render_template, redirect, url_for, request, flash, sen
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
 from flask_bootstrap import Bootstrap
-from styleframe import StyleFrame
-from io import BytesIO
 import pandas as pd
-import numpy as np
 
 from Forms import LoginForm
 
@@ -13,7 +10,7 @@ from Forms import LoginForm
 app = Flask(__name__)
 Bootstrap(app)
 app.secret_key = 's0m3k3y'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+mysqlconnector://root:fg67klbn0@172.16.14.196:3306/s11'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+mysqlconnector://root:fg67klbn0@172.16.16.175:3306/s13'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
@@ -242,8 +239,7 @@ def login_page():
         hirurgList = get_hirurg_list(form.departName.data)
         anesteziologList = get_anesteziolog_list()
         importData = get_oper_list(form.operDate.data, form.departName.data)
-        dictDep = {index: value for index, value in form.departName.choices}
-        depNameTitle = dictDep.get(int(form.departName.data))
+        depNameTitle = {index: value for index, value in form.departName.choices}.get(int(form.departName.data))
         return render_template('add_client.html', departName=depNameTitle,
                                operDate=form.operDate.data.strftime('%d.%m.%Y'),
                                externals=externalsID, hirurgs=hirurgList, anesteziologList=anesteziologList,
@@ -251,16 +247,15 @@ def login_page():
     return render_template('login.html', logForm=form)
 
 
-@app.route('/exportExcel')
+@app.route('/exportExcel', methods=['GET'])
 def exportExcel():
-    exportData = get_oper_list_export('2020-09-23', 62)
+    exportData = get_oper_list_export(request.args['operDate'], request.args['departID'])
     df = pd.DataFrame(exportData)
     writer = pd.ExcelWriter('План операций.xlsx', engine="xlsxwriter")
     df.to_excel(writer, index=False, startrow=4, startcol=0)
-    opDate = '23.09.2020'
-    depName = 'Хирургическое отделение №3'
     workbook = writer.book
     worksheet = writer.sheets['Sheet1']
+    worksheet.set_landscape()
     title_format = workbook.add_format({'bold': True,
                                         'align': 'center',
                                         'font': 'Times New Roman',
@@ -279,51 +274,21 @@ def exportExcel():
                                         'text_wrap': True,
                                         'align': 'center',
                                         'valign': 'vcenter'})
-    worksheet.merge_range('C1:H1', 'План операций на ' + opDate, title_format)
-    worksheet.merge_range('C2:H2', depName, title_format)
-
-    for col, value in enumerate(df.columns.values):
-        worksheet.write(4, col, value, table_format_header)
-
-    for row, item in enumerate(df.values):
-        for col, val in enumerate(item):
-            worksheet.write(row + 5, col, val, table_format)
-
-    writer.save()
-    return 'nothing'
-
-
-@app.route('/exportExcelTest', methods=['GET'])
-def exportExcelTest():
-    operDate = request.args['operDate']
-    departID = request.args['departID']
-    exportData = get_oper_list_export(operDate, departID)
-    df = pd.DataFrame(exportData)
-    writer = pd.ExcelWriter('План операций.xlsx', engine="xlsxwriter")
-    df.to_excel(writer, index=False, startrow=4, startcol=0)
-    workbook = writer.book
-    worksheet = writer.sheets['Sheet1']
-    title_format = workbook.add_format({'bold': True,
-                                        'align': 'center',
-                                        'font': 'Times New Roman',
-                                        'size': 14})
-    table_format_header = workbook.add_format({'bold': True,
-                                               'border': 1,
-                                               'font': 'Times New Roman',
-                                               'size': 10,
-                                               'text_wrap': True,
-                                               'align': 'center',
-                                               'valign': 'vcenter'})
-    table_format = workbook.add_format({'bold': False,
-                                        'border': 1,
-                                        'font': 'Times New Roman',
-                                        'size': 10,
-                                        'text_wrap': True,
-                                        'align': 'center',
-                                        'valign': 'vcenter'})
-    worksheet.merge_range('C1:H1', 'План операций на ' + operDate.data.strftime('%d.%m.%Y'), title_format)
+    worksheet.merge_range('C1:H1', 'План операций на ' +
+                          datetime.strptime(request.args['operDate'], '%Y-%m-%d').strftime('%d.%m.%Y'), title_format)
     worksheet.merge_range('C2:H2', request.args['departName'], title_format)
-
+    worksheet.set_column('A:A', 3)
+    worksheet.set_column('B:B', 21.86)
+    worksheet.set_column('C:C', 6.43)
+    worksheet.set_column('D:D', 9.71)
+    worksheet.set_column('E:E', 17.71)
+    worksheet.set_column('F:F', 17.86)
+    worksheet.set_column('G:G', 15.71)
+    worksheet.set_column('H:H', 12.57)
+    worksheet.set_column('I:I', 13.57)
+    worksheet.set_column('J:J', 6.43)
+    worksheet.set_margins(left=float(0.32), right=float(0.24), top=float(0.76), bottom=float(0.76))
+    worksheet.hide()
     for col, value in enumerate(df.columns.values):
         worksheet.write(4, col, value, table_format_header)
 
@@ -333,3 +298,16 @@ def exportExcelTest():
 
     writer.close()
     return send_file("План операций.xlsx", as_attachment=True)
+
+
+@app.route('/add_client', methods=['POST'])
+def add_client():
+    depNameTitle = request.form.get('departName')
+    opDate = request.form.get('operDate')
+    externalsID = get_externals()
+    hirurgList = get_hirurg_list(request.form.get('depID'))
+    anesteziologList = get_anesteziolog_list()
+    importData = get_oper_list(datetime.strptime(request.form.get('operDate'), '%d.%m.%Y').strftime('%Y-%m-%d'), request.form.get('depID'))
+    return render_template('add_client.html', departName=depNameTitle, operDate=opDate,
+                           externals=externalsID, hirurgs=hirurgList, anesteziologList=anesteziologList,
+                           dataSet=importData, depID=request.form.get('depID'), opDate=opDate)

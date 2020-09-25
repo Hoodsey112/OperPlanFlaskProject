@@ -126,8 +126,8 @@
                 </div>
             </div>
             <input class="btn btn-success" type="submit" value="Добавить">
-            <a href="{{url_for('exportExcelTest', departID=depID, operDate=opDate)}}">
-                <input id="exportExcelTest" class="btn btn-primary" type="button" value="Экспорт в Excel">
+            <a href="{{url_for('exportExcel', departID=depID, operDate=opDate, departName=departName)}}">
+                <input id="exportExcel" class="btn btn-primary" type="button" value="Экспорт в Excel">
             </a>
         </div>
         <table border="1" class="table table-striped">
