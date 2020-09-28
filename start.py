@@ -10,7 +10,7 @@ from Forms import LoginForm
 app = Flask(__name__)
 Bootstrap(app)
 app.secret_key = 's0m3k3y'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+mysqlconnector://root:fg67klbn0@172.16.16.175:3306/s13'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+mysqlconnector://root:fg67klbn0@172.16.14.196:3306/s11'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
@@ -85,7 +85,8 @@ def get_externals():
             CONCAT((YEAR(CURRENT_DATE()) - YEAR(Client.birthDate)) - if (DAYOFYEAR(CURRENT_DATE()) > 
             DAYOFYEAR(Client.birthDate),0,1), ' лет ', (IF(MONTH(CURRENT_DATE()) - MONTH(Client.birthDate) < 0, 
             MONTH(CURRENT_DATE()) - MONTH(Client.birthDate) + 12, MONTH(CURRENT_DATE()) - MONTH(Client.birthDate))), 
-            ' мес.') AS Client_AGE
+            ' мес.') AS Client_AGE,
+            Client.id as Client_ID
             FROM Event
             JOIN Action ON Action.event_id = Event.id
             JOIN Client ON Event.client_id = Client.id
@@ -97,7 +98,7 @@ def get_externals():
               and Event.eventType_id in (62, 72, 79, 73, 80, 78, 97)""")
     for external in externalsId:
         extArray.append({'Event_externalId': external['Event_externalId'], 'Client_FIO': external['Client_FIO'],
-                         'Client_AGE': external['Client_AGE']})
+                         'Client_AGE': external['Client_AGE'], 'Client_ID': external['Client_ID']})
     externalsId.close()
     return extArray
 
@@ -300,14 +301,29 @@ def exportExcel():
     return send_file("План операций.xlsx", as_attachment=True)
 
 
-@app.route('/add_client', methods=['POST'])
+@app.route('/add_client', methods=['GET', 'POST'])
 def add_client():
+    depID = request.form.get('departID')
+    opDate_query = datetime.strptime(request.form.get('operDate'), '%d.%m.%Y').strftime('%Y-%m-%d')
+    opDate_page = request.form.get('operDate')
     depNameTitle = request.form.get('departName')
-    opDate = request.form.get('operDate')
+    max_idx = db.engine.execute("""SELECT IF(MAX(idx) IS NULL, 0, MAX(idx)) idx
+                                FROM PlanOfOperation
+                                WHERE dateOperation = %s
+                                AND orgStruct_id = %s;""", (opDate_query, int(depID),))
+    newPacient = PlanOfOperation(max_idx, datetime.now(), opDate_query, request.form.get('externalId'),
+                                 request.form.get('client_id'), request.form.get('age_client'), depID,
+                                 request.form.get('diagnoz_client'), request.form.get('operation_client'),
+                                 request.form.get('hirurg_1'), request.form.get('hirurg_2'),
+                                 request.form.get('hirurg_3'), request.form.get('anesteziolog'),
+                                 request.form.get('transfuziolog'), request.form.get('operRoom'))
+    db.session.add(newPacient)
+    db.session.commit()
+
     externalsID = get_externals()
-    hirurgList = get_hirurg_list(request.form.get('depID'))
+    hirurgList = get_hirurg_list(depID)
     anesteziologList = get_anesteziolog_list()
-    importData = get_oper_list(datetime.strptime(request.form.get('operDate'), '%d.%m.%Y').strftime('%Y-%m-%d'), request.form.get('depID'))
-    return render_template('add_client.html', departName=depNameTitle, operDate=opDate,
-                           externals=externalsID, hirurgs=hirurgList, anesteziologList=anesteziologList,
-                           dataSet=importData, depID=request.form.get('depID'), opDate=opDate)
+    importData = get_oper_list(opDate_page, depID)
+    return render_template('add_client.html', departName=depNameTitle, operDate=opDate_page, externals=externalsID,
+                           hirurgs=hirurgList, anesteziologList=anesteziologList, dataSet=importData, depID=depID,
+                           opDate=opDate_query)

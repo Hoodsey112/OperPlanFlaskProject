@@ -17,10 +17,10 @@
                             <p style="font-size:11pt">Номер ИБ:</p>
                             <p style="font-size:11pt">
                             <select name="externalId" size="1">
-                                <option disabled value="-1" selected="selected" data-client-name="" data-client-age="">0</option>
+                                <option disabled value="-1" selected="selected" data-client-name="" data-client-age="" data-client-id="">0</option>
                                 {% for external in externals %}
                                     <option value="{{external.Event_externalId}}" data-client-name="{{external.Client_FIO}}"
-                                            data-client-age="{{external.Client_AGE}}">{{external.Event_externalId}}</option>
+                                            data-client-age="{{external.Client_AGE}}" data-client-id="{{external.Client_ID}}">{{external.Event_externalId}}</option>
                                 {% endfor %}
                             </select>
                             </p>
@@ -28,6 +28,10 @@
                             <p style="font-size:11pt"><input type="text" name="fio_client" value="" readonly></p>
                             <p style="font-size:11pt">Возраст:</p>
                             <p style="font-size:11pt"><input type="text" name="age_client" value="" readonly></p>
+                            <p><input type="hidden" name="client_id" value=""></p>
+                            <p><input type="hidden" name="departID" value="{{depID}}"> </p>
+                            <p><input type="hidden" name="departName" value="{{departName}}"> </p>
+                            <p><input type="hidden" name="operDate" value="{{operDate}}"> </p>
                         </div>
                     </div>
                     <div class="col-xs-6">
@@ -174,6 +178,7 @@
     ClientInfo.externalId.onchange = function(){
         ClientInfo.fio_client.value = this.options[this.selectedIndex].getAttribute("data-client-name");
         ClientInfo.age_client.value = this.options[this.selectedIndex].getAttribute("data-client-age");
+        ClientInfo.client_id.value = this.options[this.selectedIndex].getAttribute("data-client-id");
     }
 </script>
 <script>
